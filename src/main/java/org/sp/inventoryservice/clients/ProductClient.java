@@ -2,6 +2,6 @@ package org.sp.inventoryservice.clients;
 
 import org.springframework.cloud.openfeign.FeignClient;
 
-@FeignClient(name = "order-service", url = "${order-service.url}")
-public interface OrderClient {
+@FeignClient(name = "product-service", url = "${product-service.url}")
+public interface ProductClient {
 }
