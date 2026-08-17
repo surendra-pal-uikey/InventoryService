@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,6 +99,60 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
+    public InventoryResponseDto reserveStockByProductId(String productId, Integer quantityToReserve) {
+        Inventory inventory = findInventoryByProductIdOrThrow(productId);
+
+        int available = inventory.getQuantityAvailable() - inventory.getReservedQuantity();
+        if (quantityToReserve > available) {
+            throw new IllegalStateException(
+                    "Insufficient stock. Available: " + available + ", requested: " + quantityToReserve);
+        }
+
+        inventory.setReservedQuantity(inventory.getReservedQuantity() + quantityToReserve);
+        updateStatus(inventory);
+
+        Inventory updated = inventoryRepository.save(inventory);
+        return InventoryMapper.toResponseDto(updated);
+    }
+
+    @Override
+    @Transactional
+    public InventoryResponseDto deductStockByProductId(String productId, Integer quantity) {
+        Inventory inventory = inventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new InventoryNotFoundException(
+                        "Inventory not found for product id: " + productId));
+
+        if (inventory.getReservedQuantity() < quantity) {
+            throw new IllegalStateException(
+                    "Cannot deduct more than reserved. Reserved: " + inventory.getReservedQuantity()
+                            + ", requested: " + quantity);
+        }
+
+        inventory.setQuantityAvailable(inventory.getQuantityAvailable() - quantity);
+        inventory.setReservedQuantity(inventory.getReservedQuantity() - quantity);
+        updateStatus(inventory);
+
+        Inventory updated = inventoryRepository.save(inventory);
+        return InventoryMapper.toResponseDto(updated);
+    }
+
+    @Override
+    @Transactional
+    public InventoryResponseDto releaseStockByProductId(String productId, Integer quantity) {
+        Inventory inventory = inventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new InventoryNotFoundException(
+                        "Inventory not found for product id: " + productId));
+
+        int newReserved = Math.max(0, inventory.getReservedQuantity() - quantity);
+        inventory.setReservedQuantity(newReserved);
+        updateStatus(inventory);
+
+        Inventory updated = inventoryRepository.save(inventory);
+        return InventoryMapper.toResponseDto(updated);
+    }
+
+    @Override
+    @Transactional
     public void deleteInventory(String inventoryId) {
         Inventory inventory = findInventoryOrThrow(inventoryId);
         inventoryRepository.delete(inventory);
@@ -109,6 +164,11 @@ public class InventoryServiceImpl implements InventoryService {
         return inventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new InventoryNotFoundException(
                         "Inventory not found with id: " + inventoryId));
+    }
+
+    private Inventory findInventoryByProductIdOrThrow(String productId) {
+        return inventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found with product id: " + productId));
     }
 
     private ProductResponseDto fetchProductOrThrow(String productId) {

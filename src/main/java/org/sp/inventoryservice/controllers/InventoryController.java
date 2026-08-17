@@ -42,23 +42,44 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.getAllInventory());
     }
 
-    @PatchMapping("/{inventoryId}/restock")
+    @PostMapping("/{inventoryId}/restock")
     public ResponseEntity<InventoryResponseDto> restockInventory(
             @PathVariable String inventoryId,
             @RequestParam Integer quantity) {
         return ResponseEntity.ok(inventoryService.restockInventory(inventoryId, quantity));
     }
 
-    @PatchMapping("/{inventoryId}/reserve")
+    @PostMapping("/{inventoryId}/reserve")
     public ResponseEntity<InventoryResponseDto> reserveStock(
             @PathVariable String inventoryId,
             @RequestParam Integer quantity) {
         return ResponseEntity.ok(inventoryService.reserveStock(inventoryId, quantity));
     }
 
+    @PostMapping("/product/{productId}/reserve")
+    public ResponseEntity<InventoryResponseDto> reserveStockByProductId(
+            @PathVariable String productId,
+            @RequestParam Integer quantity) {
+        return ResponseEntity.ok(inventoryService.reserveStockByProductId(productId, quantity));
+    }
+
     @DeleteMapping("/{inventoryId}")
     public ResponseEntity<Void> deleteInventory(@PathVariable String inventoryId) {
         inventoryService.deleteInventory(inventoryId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/product/{productId}/deduct")
+    public ResponseEntity<InventoryResponseDto> deductStockByProductId(
+            @PathVariable String productId,
+            @RequestParam Integer quantity) {
+        return ResponseEntity.ok(inventoryService.deductStockByProductId(productId, quantity));
+    }
+
+    @PostMapping("/product/{productId}/release")
+    public ResponseEntity<InventoryResponseDto> releaseStockByProductId(
+            @PathVariable String productId,
+            @RequestParam Integer quantity) {
+        return ResponseEntity.ok(inventoryService.releaseStockByProductId(productId, quantity));
     }
 }

@@ -19,5 +19,11 @@ public interface InventoryService {
 
     InventoryResponseDto reserveStock(String inventoryId, Integer quantityToReserve);
 
+    InventoryResponseDto reserveStockByProductId(String productId, Integer quantityToReserve);
+
     void deleteInventory(String inventoryId);
+
+    InventoryResponseDto deductStockByProductId(String productId, Integer quantity);
+
+    InventoryResponseDto releaseStockByProductId(String productId, Integer quantity);
 }
